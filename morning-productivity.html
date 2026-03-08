@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="모닝루틴">
+<meta name="theme-color" content="#1a1209">
+<title>모닝 루틴 & 미루기 극복</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:#1a1209; --paper:#f5efe6; --paper2:#ede6d8;
+    --amber:#c97d20; --amber-light:#e8a44a; --amber-pale:#f7e4c4;
+    --red:#c0392b; --green:#2d6a4f; --shadow:rgba(26,18,9,0.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--paper);color:var(--ink);font-family:'Noto Serif KR',serif;min-height:100vh;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 31px,rgba(180,155,110,0.18) 31px,rgba(180,155,110,0.18) 32px);
+    background-attachment:fixed;}
+
+  /* HEADER */
+  .notebook-header{background:var(--ink);color:var(--paper);padding:calc(28px + env(safe-area-inset-top)) 32px 20px;position:relative;overflow:hidden;border-bottom:4px solid var(--amber);}
+  .notebook-header::before{content:'';position:absolute;left:72px;top:0;bottom:0;width:2px;background:var(--amber);opacity:0.5;}
+  .header-content{padding-left:56px;}
+  .header-date{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;color:var(--amber-light);text-transform:uppercase;margin-bottom:6px;}
+  .header-title{font-size:22px;font-weight:700;letter-spacing:-0.5px;line-height:1.3;}
+  .header-sub{font-size:12px;color:rgba(245,239,230,0.55);margin-top:4px;font-weight:300;}
+
+  /* TABS */
+  .tabs{display:flex;background:var(--paper2);border-bottom:2px solid var(--ink);padding:0 12px;gap:0;overflow-x:auto;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{padding:13px 15px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;
+    color:rgba(26,18,9,0.45);font-family:'Noto Serif KR',serif;transition:all 0.2s;
+    border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;flex-shrink:0;}
+  .tab.active{color:var(--ink);border-bottom-color:var(--amber);background:var(--paper);}
+  .tab:hover:not(.active){color:var(--ink);background:rgba(201,125,32,0.07);}
+
+  /* PAGES */
+  .page{display:none;padding:22px 18px 80px;}
+  .page.active{display:block;}
+
+  /* SECTION LABEL */
+  .section-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;
+    color:var(--amber);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+  .section-label::after{content:'';flex:1;height:1px;background:rgba(201,125,32,0.25);}
+
+  /* CARDS */
+  .card{background:white;border:1px solid rgba(26,18,9,0.1);border-radius:4px;padding:18px 20px;margin-bottom:14px;
+    box-shadow:2px 3px 0 var(--shadow);transition:transform 0.15s,box-shadow 0.15s;}
+  .card:hover{transform:translateY(-1px);box-shadow:3px 5px 0 var(--shadow);}
+  .card-title{font-size:15px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+  .card-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .card-text{font-size:13.5px;line-height:1.75;color:rgba(26,18,9,0.75);font-weight:300;}
+
+  /* INPUTS */
+  .todo-input{flex:1;padding:11px 14px;border:2px solid rgba(26,18,9,0.15);border-radius:4px;
+    font-family:'Noto Serif KR',serif;font-size:14px;background:white;color:var(--ink);transition:border-color 0.2s;}
+  .todo-input:focus{outline:none;border-color:var(--amber);}
+  input[type="date"],input[type="time"]{padding:11px 10px;border:2px solid rgba(26,18,9,0.15);border-radius:4px;
+    font-family:'Space Mono',monospace;font-size:12px;background:white;color:var(--ink);cursor:pointer;}
+  input[type="date"]:focus,input[type="time"]:focus{outline:none;border-color:var(--amber);}
+  select{padding:11px 8px;border:2px solid rgba(26,18,9,0.15);border-radius:4px;
+    font-family:'Noto Serif KR',serif;font-size:13px;background:white;color:var(--ink);cursor:pointer;}
+  select:focus{outline:none;border-color:var(--amber);}
+
+  /* BUTTONS */
+  .btn{padding:11px 16px;background:var(--ink);color:var(--paper);border:none;border-radius:4px;
+    font-family:'Noto Serif KR',serif;font-size:13px;font-weight:600;cursor:pointer;transition:background 0.2s;white-space:nowrap;}
+  .btn:hover{background:var(--amber);}
+  .btn-sm{padding:6px 12px;font-size:11px;border-radius:3px;}
+  .btn-ghost{background:transparent;color:rgba(26,18,9,0.4);border:1px solid rgba(26,18,9,0.15);}
+  .btn-ghost:hover{background:rgba(192,57,43,0.08);color:var(--red);border-color:var(--red);}
+
+  /* ADD FORM */
+  .add-form{background:white;border:1px solid rgba(26,18,9,0.1);border-radius:4px;padding:14px 16px;margin-bottom:20px;box-shadow:2px 3px 0 var(--shadow);}
+  .add-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap;}
+  .add-row:last-child{margin-bottom:0;}
+
+  /* TODO ITEMS */
+  .todo-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:white;
+    border:1px solid rgba(26,18,9,0.08);border-left:3px solid transparent;border-radius:4px;
+    margin-bottom:8px;transition:all 0.2s;box-shadow:1px 2px 0 var(--shadow);}
+  .todo-item:hover{border-left-color:var(--amber);}
+  .todo-item.done{opacity:0.5;border-left-color:var(--green)!important;}
+  .todo-item.done .todo-text{text-decoration:line-through;color:rgba(26,18,9,0.4);}
+  .todo-item.overdue{border-left-color:var(--red)!important;}
+  .todo-check{width:20px;height:20px;border:2px solid rgba(26,18,9,0.25);border-radius:50%;cursor:pointer;
+    flex-shrink:0;margin-top:2px;transition:all 0.2s;display:flex;align-items:center;justify-content:center;font-size:10px;color:white;}
+  .todo-item.done .todo-check{background:var(--green);border-color:var(--green);}
+  .todo-check:hover{border-color:var(--amber);}
+  .todo-text{flex:1;font-size:14px;line-height:1.5;}
+  .todo-meta{display:flex;gap:5px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+  .badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-family:'Space Mono',monospace;font-weight:700;letter-spacing:0.5px;}
+  .priority-high{background:rgba(192,57,43,0.1);color:var(--red);}
+  .priority-mid{background:rgba(201,125,32,0.12);color:var(--amber);}
+  .priority-low{background:rgba(45,106,79,0.1);color:var(--green);}
+  .date-tag{font-family:'Space Mono',monospace;font-size:10px;color:rgba(26,18,9,0.45);padding:2px 7px;background:var(--paper2);border-radius:20px;}
+  .date-tag.ov{background:rgba(192,57,43,0.1);color:var(--red);font-weight:700;}
+  .todo-del{cursor:pointer;color:rgba(26,18,9,0.2);font-size:18px;flex-shrink:0;transition:color 0.2s;line-height:1;}
+  .todo-del:hover{color:var(--red);}
+
+  /* STATS */
+  .stat-row{display:flex;gap:8px;margin-bottom:18px;}
+  .stat-box{flex:1;background:white;border:1px solid rgba(26,18,9,0.08);border-radius:4px;padding:11px 10px;text-align:center;box-shadow:1px 2px 0 var(--shadow);}
+  .stat-num{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--amber);display:block;}
+  .stat-label{font-size:10px;color:rgba(26,18,9,0.45);margin-top:2px;letter-spacing:0.3px;}
+
+  /* FILTER CHIPS */
+  .filter-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .chip{padding:6px 13px;font-size:12px;border-radius:20px;border:1.5px solid rgba(26,18,9,0.15);
+    background:white;color:rgba(26,18,9,0.5);cursor:pointer;font-family:'Noto Serif KR',serif;transition:all 0.2s;white-space:nowrap;}
+  .chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .chip:hover:not(.active){border-color:var(--amber);color:var(--amber);}
+  .chip.ov-chip{border-color:rgba(192,57,43,0.3);color:var(--red);}
+  .chip.ov-chip.active{background:var(--red);border-color:var(--red);color:white;}
+
+  /* OVERDUE BANNER */
+  .ov-banner{background:rgba(192,57,43,0.07);border:1.5px solid rgba(192,57,43,0.2);border-radius:4px;
+    padding:11px 14px;margin-bottom:16px;display:flex;align-items:center;gap:8px;font-size:13px;}
+  .ov-banner a{color:var(--red);text-decoration:underline;margin-left:4px;}
+
+  /* HISTORY */
+  .period-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+  .ptab{padding:7px 15px;font-size:12px;border-radius:4px;border:1.5px solid rgba(26,18,9,0.15);
+    background:white;color:rgba(26,18,9,0.5);cursor:pointer;font-family:'Noto Serif KR',serif;transition:all 0.2s;}
+  .ptab.active{background:var(--amber);color:white;border-color:var(--amber);}
+  .history-group{margin-bottom:24px;}
+  .h-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+    background:var(--ink);color:var(--paper);border-radius:4px 4px 0 0;}
+  .h-header.ov-header{background:var(--red);}
+  .h-date-label{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;letter-spacing:1px;}
+  .h-stats{display:flex;gap:8px;align-items:center;}
+  .hbadge{padding:2px 8px;border-radius:10px;font-size:10px;font-family:'Space Mono',monospace;font-weight:700;}
+  .hb-done{background:rgba(45,106,79,0.3);color:#7bc9a4;}
+  .hb-miss{background:rgba(192,57,43,0.35);color:#f5a898;}
+  .h-items{background:white;border:1px solid rgba(26,18,9,0.1);border-top:none;border-radius:0 0 4px 4px;overflow:hidden;}
+  .h-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid rgba(26,18,9,0.06);font-size:13.5px;}
+  .h-item:last-child{border-bottom:none;}
+  .h-item.hd{color:rgba(26,18,9,0.4);}
+  .h-item.hd .todo-text{text-decoration:line-through;}
+  .hi{font-size:13px;flex-shrink:0;}
+
+  /* ALARM */
+  .alarm-hero{background:var(--ink);border-radius:6px;padding:22px;text-align:center;margin-bottom:20px;position:relative;overflow:hidden;}
+  .alarm-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(201,125,32,0.2) 0%,transparent 70%);}
+  .alarm-time-display{font-family:'Space Mono',monospace;font-size:46px;font-weight:700;color:var(--paper);letter-spacing:4px;line-height:1;margin-bottom:6px;position:relative;}
+  .alarm-lbl{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--amber-light);font-family:'Space Mono',monospace;position:relative;}
+  .alarm-set-row{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+  .alarm-status{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(26,18,9,0.5);padding:8px 0;font-family:'Space Mono',monospace;}
+  .sdot{width:8px;height:8px;border-radius:50%;background:rgba(26,18,9,0.2);transition:background 0.3s;}
+  .sdot.on{background:var(--green);box-shadow:0 0 6px rgba(45,106,79,0.5);}
+  .sdot.ring{background:var(--red);animation:pulse 0.6s infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:0.7}}
+  .alarm-list{list-style:none;}
+  .alarm-li{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:white;
+    border:1px solid rgba(26,18,9,0.08);border-radius:4px;margin-bottom:8px;box-shadow:1px 2px 0 var(--shadow);}
+  .alarm-time{font-family:'Space Mono',monospace;font-size:18px;font-weight:700;}
+  .alarm-name{font-size:12px;color:rgba(26,18,9,0.5);}
+  .toggle{width:40px;height:22px;background:rgba(26,18,9,0.15);border-radius:11px;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;}
+  .toggle.on{background:var(--amber);}
+  .toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+  .toggle.on::after{left:21px;}
+
+  /* POMODORO */
+  .timer-circle{width:128px;height:128px;border-radius:50%;border:5px solid var(--paper2);display:flex;align-items:center;justify-content:center;flex-direction:column;margin:0 auto 16px;background:white;box-shadow:0 4px 16px var(--shadow);}
+  .timer-num{font-family:'Space Mono',monospace;font-size:30px;font-weight:700;color:var(--ink);line-height:1;}
+  .timer-unit{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(26,18,9,0.4);font-family:'Space Mono',monospace;}
+  .timer-btns{display:flex;gap:10px;justify-content:center;}
+
+  /* TIPS */
+  .tips-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .tip-number{font-family:'Space Mono',monospace;font-size:26px;font-weight:700;color:var(--amber);line-height:1;flex-shrink:0;}
+  .rule-box{background:var(--amber);color:var(--ink);padding:14px 18px;border-radius:4px;margin-bottom:14px;display:flex;align-items:center;gap:14px;}
+  .rule-num{font-family:'Space Mono',monospace;font-size:30px;font-weight:700;line-height:1;flex-shrink:0;}
+  .rule-text{font-size:14px;font-weight:600;line-height:1.5;}
+  .quote-block{border-left:3px solid var(--amber);padding:13px 16px;background:white;font-size:13px;font-style:italic;line-height:1.7;color:rgba(26,18,9,0.7);margin-bottom:16px;box-shadow:1px 2px 0 var(--shadow);}
+
+  /* EMPTY */
+  .empty{text-align:center;padding:30px 20px;color:rgba(26,18,9,0.3);font-size:13px;border:2px dashed rgba(26,18,9,0.1);border-radius:4px;}
+
+  @media(max-width:500px){
+    .tips-grid{grid-template-columns:1fr;}
+    .alarm-time-display{font-size:36px;}
+    .add-row{flex-wrap:wrap;}
+  }
+</style>
+</head>
+<body>
+
+<div class="notebook-header">
+  <div class="header-content">
+    <div class="header-date" id="headerDate"></div>
+    <div class="header-title">오늘도, 해내는 하루 📓</div>
+    <div class="header-sub">미루기 극복 · 기상 루틴 · 집중력 관리</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('todo',this)">📋 할일</button>
+  <button class="tab"        onclick="switchTab('history',this)">📅 기록</button>
+  <button class="tab"        onclick="switchTab('alarm',this)">⏰ 알람</button>
+  <button class="tab"        onclick="switchTab('tips',this)">💡 미루기 극복</button>
+</div>
+
+<!-- ══ TAB 1: 할일 ══ -->
+<div class="page active" id="page-todo">
+
+  <div class="stat-row">
+    <div class="stat-box"><span class="stat-num" id="sTotal">0</span><div class="stat-label">전체</div></div>
+    <div class="stat-box"><span class="stat-num" id="sDone">0</span><div class="stat-label">완료</div></div>
+    <div class="stat-box"><span class="stat-num" id="sMiss">0</span><div class="stat-label">미완료</div></div>
+    <div class="stat-box"><span class="stat-num" id="sRate">0%</span><div class="stat-label">달성률</div></div>
+  </div>
+
+  <div id="ovBanner" class="ov-banner" style="display:none">
+    ⚠️ <span id="ovMsg"></span>
+  </div>
+
+  <div class="section-label">할 일 추가</div>
+  <div class="add-form">
+    <div class="add-row">
+      <input class="todo-input" id="todoInput" placeholder="할 일을 입력하세요..." onkeydown="if(event.key==='Enter')addTodo()" style="min-width:0;width:100%">
+    </div>
+    <div class="add-row">
+      <input type="date" id="todoDate">
+      <select id="prioritySel">
+        <option value="high">🔴 긴급</option>
+        <option value="mid" selected>🟡 보통</option>
+        <option value="low">🟢 여유</option>
+      </select>
+      <button class="btn" onclick="addTodo()">추가</button>
+    </div>
+  </div>
+
+  <div class="filter-row" id="filterRow"></div>
+  <div class="section-label">할 일 목록</div>
+  <div id="todoList"></div>
+
+</div>
+
+<!-- ══ TAB 2: 기록 ══ -->
+<div class="page" id="page-history">
+
+  <div class="stat-row">
+    <div class="stat-box"><span class="stat-num" id="hTotal">0</span><div class="stat-label">전체</div></div>
+    <div class="stat-box"><span class="stat-num" id="hDone">0</span><div class="stat-label">완료</div></div>
+    <div class="stat-box"><span class="stat-num" id="hMiss">0</span><div class="stat-label">미완료</div></div>
+    <div class="stat-box"><span class="stat-num" id="hRate">0%</span><div class="stat-label">달성률</div></div>
+  </div>
+
+  <div class="period-tabs">
+    <button class="ptab active" onclick="setPeriod('miss',this)">🔴 미완료만</button>
+    <button class="ptab"        onclick="setPeriod('all',this)">전체</button>
+    <button class="ptab"        onclick="setPeriod('week',this)">최근 7일</button>
+    <button class="ptab"        onclick="setPeriod('month',this)">이번 달</button>
+  </div>
+
+  <div id="historyList"></div>
+
+</div>
+
+<!-- ══ TAB 3: 알람 ══ -->
+<div class="page" id="page-alarm">
+
+  <div class="alarm-hero">
+    <div class="alarm-time-display" id="currentTime">--:--:--</div>
+    <div class="alarm-lbl">현재 시각</div>
+  </div>
+
+  <div class="section-label">알람 설정</div>
+  <div class="alarm-set-row">
+    <input type="time" id="alarmTime" value="06:30">
+    <input class="todo-input" id="alarmName" placeholder="알람 이름 (예: 기상)" style="font-size:13px">
+    <button class="btn" onclick="addAlarm()">설정</button>
+  </div>
+
+  <div class="alarm-status">
+    <div class="sdot" id="sdot"></div>
+    <span id="stext">알람 없음</span>
+  </div>
+  <ul class="alarm-list" id="alarmList"></ul>
+
+  <div style="margin-top:22px">
+    <div class="section-label">기상 성공 팁</div>
+    <div class="quote-block">"일어나기 5초 전, 머릿속으로 5-4-3-2-1을 세고 몸을 일으키세요.<br>뇌가 변명을 만들기 전에 먼저 행동하는 것이 핵심입니다."</div>
+    <div class="card"><div class="card-title"><div class="card-icon" style="background:#fef3e2">🌙</div>전날 밤 준비</div><div class="card-text">다음날 옷, 가방, 아침 메뉴를 전날 밤에 준비해두세요. 아침 결정 피로를 없애면 기상이 훨씬 수월해집니다.</div></div>
+    <div class="card"><div class="card-title"><div class="card-icon" style="background:#fef3e2">📱</div>폰은 침대 밖에</div><div class="card-text">스마트폰을 침대에서 손이 닿지 않는 곳에 두세요. 알람을 끄려면 반드시 일어나야 합니다.</div></div>
+    <div class="card"><div class="card-title"><div class="card-icon" style="background:#fef3e2">☀️</div>빛으로 깨어나기</div><div class="card-text">커튼을 조금 열어두거나 조명 알람을 사용하세요. 빛은 멜라토닌을 억제해 자연스럽게 각성을 돕습니다.</div></div>
+  </div>
+</div>
+
+<!-- ══ TAB 4: 미루기 극복 ══ -->
+<div class="page" id="page-tips">
+  <div class="quote-block">"미루기는 게으름이 아닙니다. 불안과 완벽주의에서 오는 회피 행동입니다.<br>시작이 두렵다면, 완벽하게 하지 않아도 된다는 허락을 스스로에게 주세요."</div>
+  <div class="rule-box"><div class="rule-num">2분</div><div class="rule-text">2분 안에 할 수 있는 일이라면<br>지금 당장 하세요. (GTD 2분 법칙)</div></div>
+
+  <div class="section-label">⏱ 집중 타이머 (포모도로)</div>
+  <div class="card" style="text-align:center;padding:22px">
+    <div class="timer-circle" id="timerCircle">
+      <div class="timer-num" id="timerDisplay">25:00</div>
+      <div class="timer-unit" id="timerMode">집중</div>
+    </div>
+    <div class="timer-btns">
+      <button class="btn" id="timerBtn" onclick="toggleTimer()">▶ 시작</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetTimer()">↺ 초기화</button>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:rgba(26,18,9,0.4)">25분 집중 → 5분 휴식</div>
+  </div>
+
+  <div class="section-label">미루기 극복 전략</div>
+  <div class="tips-grid">
+    <div class="card" style="padding:14px 16px"><div style="display:flex;gap:10px;align-items:flex-start"><div class="tip-number">01</div><div><div style="font-weight:700;font-size:13px;margin-bottom:4px">개구리 먹기</div><div class="card-text" style="font-size:12px">가장 하기 싫은 일을 하루 중 제일 먼저 하세요. 그 이후 모든 일은 쉬워집니다.</div></div></div></div>
+    <div class="card" style="padding:14px 16px"><div style="display:flex;gap:10px;align-items:flex-start"><div class="tip-number">02</div><div><div style="font-weight:700;font-size:13px;margin-bottom:4px">작게 쪼개기</div><div class="card-text" style="font-size:12px">큰 일을 15분 단위로 나누세요. "보고서 쓰기"보다 "서론 첫 문단만 쓰기"가 시작하기 쉽습니다.</div></div></div></div>
+    <div class="card" style="padding:14px 16px"><div style="display:flex;gap:10px;align-items:flex-start"><div class="tip-number">03</div><div><div style="font-weight:700;font-size:13px;margin-bottom:4px">환경 설계</div><div class="card-text" style="font-size:12px">방해 요소를 미리 제거하세요. 폰 알림 OFF, SNS 차단, 정돈된 책상이 의지력보다 강합니다.</div></div></div></div>
+    <div class="card" style="padding:14px 16px"><div style="display:flex;gap:10px;align-items:flex-start"><div class="tip-number">04</div><div><div style="font-weight:700;font-size:13px;margin-bottom:4px">이유 찾기</div><div class="card-text" style="font-size:12px">이 일이 왜 중요한지 3가지를 적어보세요. 목적의식이 생기면 저항감이 줄어듭니다.</div></div></div></div>
+    <div class="card" style="padding:14px 16px"><div style="display:flex;gap:10px;align-items:flex-start"><div class="tip-number">05</div><div><div style="font-weight:700;font-size:13px;margin-bottom:4px">보상 설계</div><div class="card-text" style="font-size:12px">일을 마치면 작은 보상을 주세요. 커피 한 잔, 10분 휴식. 뇌는 보상을 기억합니다.</div></div></div></div>
+    <div class="card" style="padding:14px 16px"><div style="display:flex;gap:10px;align-items:flex-start"><div class="tip-number">06</div><div><div style="font-weight:700;font-size:13px;margin-bottom:4px">책임 파트너</div><div class="card-text" style="font-size:12px">오늘 할 일을 누군가에게 선언하세요. 공개 선언은 완료 확률을 65%까지 높입니다.</div></div></div></div>
+  </div>
+</div>
+
+<script>
+// ═══ STORAGE ═══
+const S={
+  get:(k,fb)=>{try{const v=localStorage.getItem(k);return v!==null?JSON.parse(v):fb;}catch{return fb;}},
+  set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+};
+
+// ═══ DATE UTILS ═══
+const DAYS=['일','월','화','수','목','금','토'];
+function todayStr(){const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;}
+function fmtDate(d){
+  if(!d)return '';
+  const [y,m,dd]=d.split('-');const dt=new Date(+y,+m-1,+dd);
+  const t=todayStr();
+  if(d===t)return '오늘';
+  const tom=new Date();tom.setDate(tom.getDate()+1);
+  const ts=`${tom.getFullYear()}-${String(tom.getMonth()+1).padStart(2,'0')}-${String(tom.getDate()).padStart(2,'0')}`;
+  if(d===ts)return '내일';
+  return `${m}/${dd}(${DAYS[dt.getDay()]})`;
+}
+function isOv(d){return d&&d<todayStr();}
+
+// ═══ HEADER ═══
+function updateHeader(){const n=new Date();document.getElementById('headerDate').textContent=`${n.getFullYear()}년 ${n.getMonth()+1}월 ${n.getDate()}일 (${DAYS[n.getDay()]})`;}
+updateHeader();
+
+// ═══ TABS ═══
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('page-'+name).classList.add('active');
+  S.set('mr_tab',name);
+  if(name==='history')renderHistory();
+}
+(function restoreTab(){
+  const tab=S.get('mr_tab','todo');
+  const btn=[...document.querySelectorAll('.tab')].find(t=>t.getAttribute('onclick')&&t.getAttribute('onclick').includes(`'${tab}'`));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const pg=document.getElementById('page-'+tab);
+  if(pg)pg.classList.add('active');
+})();
+
+// ═══ CLOCK ═══
+function updateClock(){
+  const n=new Date();
+  const h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0'),s=String(n.getSeconds()).padStart(2,'0');
+  const el=document.getElementById('currentTime');if(el)el.textContent=`${h}:${m}:${s}`;
+  checkAlarms(h,m,s);
+}
+setInterval(updateClock,1000);updateClock();
+
+// ═══ ALARMS ═══
+let alarms=S.get('mr_alarms',[]);let ringing=null;
+function saveAlarms(){S.set('mr_alarms',alarms);}
+function addAlarm(){
+  const t=document.getElementById('alarmTime').value;
+  const l=document.getElementById('alarmName').value.trim()||'알람';
+  if(!t)return;
+  alarms.push({id:Date.now(),time:t,label:l,on:true});
+  document.getElementById('alarmName').value='';
+  saveAlarms();renderAlarms();
+}
+function renderAlarms(){
+  const ul=document.getElementById('alarmList');if(!ul)return;
+  if(!alarms.length){ul.innerHTML='<li style="text-align:center;padding:18px;color:rgba(26,18,9,0.3);font-size:13px">설정된 알람이 없습니다</li>';
+    document.getElementById('sdot').className='sdot';document.getElementById('stext').textContent='알람 없음';return;}
+  const sorted=[...alarms].sort((a,b)=>a.time.localeCompare(b.time));
+  ul.innerHTML=sorted.map(a=>`<li class="alarm-li">
+    <div><div class="alarm-time">${a.time}</div><div class="alarm-name">${a.label}</div></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="toggle ${a.on?'on':''}" onclick="toggleAlarm(${a.id})"></div>
+      <span class="todo-del" onclick="deleteAlarm(${a.id})">×</span>
+    </div></li>`).join('');
+  const ac=alarms.filter(a=>a.on);
+  document.getElementById('sdot').className=ac.length?'sdot on':'sdot';
+  document.getElementById('stext').textContent=ac.length?`알람 ${ac.length}개 활성화됨`:'알람 없음';
+}
+function toggleAlarm(id){alarms=alarms.map(a=>a.id===id?{...a,on:!a.on}:a);saveAlarms();renderAlarms();}
+function deleteAlarm(id){alarms=alarms.filter(a=>a.id!==id);saveAlarms();renderAlarms();}
+function checkAlarms(h,m,s){
+  if(s!=='00')return;const cur=`${h}:${m}`;
+  alarms.forEach(a=>{
+    if(a.on&&a.time===cur&&ringing!==a.id){
+      ringing=a.id;
+      document.getElementById('sdot').className='sdot ring';
+      document.getElementById('stext').textContent=`🔔 ${a.label} 알람!`;
+      if(typeof Notification!=='undefined'&&Notification.permission==='granted')
+        new Notification(`⏰ ${a.label}`,{body:'설정한 알람 시각입니다!'});
+      setTimeout(()=>{ringing=null;renderAlarms();},60000);
+    }
+  });
+}
+if(typeof Notification!=='undefined'&&Notification.permission==='default')Notification.requestPermission();
+
+// ═══ TODOS ═══
+let todos=S.get('mr_todos',[]);
+// migrate: ensure all have date
+todos=todos.map(t=>({date:todayStr(),...t}));
+let activeFilter='today';
+
+function saveTodos(){S.set('mr_todos',todos);}
+
+// set default date to today
+document.getElementById('todoDate').value=todayStr();
+
+function addTodo(){
+  const input=document.getElementById('todoInput');
+  const text=input.value.trim();if(!text)return;
+  const priority=document.getElementById('prioritySel').value;
+  const date=document.getElementById('todoDate').value||todayStr();
+  todos.push({id:Date.now(),text,priority,date,done:false});
+  input.value='';
+  saveTodos();buildFilter();renderTodos();updateOvBanner();
+}
+function toggleTodo(id){todos=todos.map(t=>t.id===id?{...t,done:!t.done}:t);saveTodos();renderTodos();updateOvBanner();}
+function deleteTodo(id){todos=todos.filter(t=>t.id!==id);saveTodos();buildFilter();renderTodos();updateOvBanner();}
+
+const PL={high:['긴급','priority-high'],mid:['보통','priority-mid'],low:['여유','priority-low']};
+
+function getFiltered(){
+  const f=activeFilter,t=todayStr();
+  if(f==='all')return todos;
+  if(f==='overdue')return todos.filter(x=>!x.done&&x.date<t);
+  if(f==='today')return todos.filter(x=>x.date===t);
+  if(f==='future')return todos.filter(x=>x.date>t);
+  return todos.filter(x=>x.date===f);
+}
+
+function renderTodos(){
+  const list=document.getElementById('todoList');
+  const filtered=getFiltered();
+  if(!filtered.length){list.innerHTML='<div class="empty">✦ 해당하는 할 일이 없습니다</div>';updateStats();return;}
+  const today=todayStr();
+  const sorted=[...filtered].sort((a,b)=>{
+    if(a.done!==b.done)return a.done?1:-1;
+    if(a.date!==b.date)return a.date<b.date?-1:1;
+    const p={high:0,mid:1,low:2};return p[a.priority]-p[b.priority];
+  });
+  list.innerHTML=sorted.map(t=>{
+    const[pl,pc]=PL[t.priority];
+    const ov=!t.done&&t.date<today;
+    const dclass=ov?'date-tag ov':'date-tag';
+    return`<div class="todo-item ${t.done?'done':''} ${ov?'overdue':''}">
+      <div class="todo-check" onclick="toggleTodo(${t.id})">${t.done?'✓':''}</div>
+      <div class="todo-text">${t.text}</div>
+      <div class="todo-meta">
+        ${t.date?`<span class="${dclass}">${fmtDate(t.date)}</span>`:''}
+        <span class="badge ${pc}">${pl}</span>
+        <span class="todo-del" onclick="deleteTodo(${t.id})">×</span>
+      </div>
+    </div>`;
+  }).join('');
+  updateStats();
+}
+
+function updateStats(){
+  const f=getFiltered();const total=f.length,done=f.filter(t=>t.done).length,miss=total-done;
+  const rate=total?Math.round(done/total*100):0;
+  document.getElementById('sTotal').textContent=total;
+  document.getElementById('sDone').textContent=done;
+  document.getElementById('sMiss').textContent=miss;
+  document.getElementById('sRate').textContent=rate+'%';
+}
+
+function updateOvBanner(){
+  const today=todayStr();
+  const ovs=todos.filter(t=>!t.done&&t.date<today);
+  const banner=document.getElementById('ovBanner');
+  if(ovs.length){
+    banner.style.display='flex';
+    document.getElementById('ovMsg').innerHTML=`기한이 지난 미완료 할 일이 <strong style="color:var(--red)">${ovs.length}개</strong> 있어요. <a href="#" onclick="setFilter('overdue');return false;">보기</a>`;
+  }else{banner.style.display='none';}
+}
+
+function buildFilter(){
+  const today=todayStr();
+  const ovCnt=todos.filter(t=>!t.done&&t.date<today).length;
+  const todCnt=todos.filter(t=>t.date===today).length;
+  const futCnt=todos.filter(t=>t.date>today).length;
+  const futureDates=[...new Set(todos.filter(t=>t.date>today).map(t=>t.date))].sort();
+
+  let html=`<button class="chip ${activeFilter==='all'?'active':''}" onclick="setFilter('all')">전체 (${todos.length})</button>`;
+  if(ovCnt)html+=`<button class="chip ov-chip ${activeFilter==='overdue'?'active':''}" onclick="setFilter('overdue')">⚠️ 기한초과 (${ovCnt})</button>`;
+  if(todCnt)html+=`<button class="chip ${activeFilter==='today'?'active':''}" onclick="setFilter('today')">오늘 (${todCnt})</button>`;
+  futureDates.forEach(d=>{
+    const cnt=todos.filter(t=>t.date===d).length;
+    html+=`<button class="chip ${activeFilter===d?'active':''}" onclick="setFilter('${d}')">${fmtDate(d)} (${cnt})</button>`;
+  });
+  document.getElementById('filterRow').innerHTML=html;
+}
+
+function setFilter(f){activeFilter=f;buildFilter();renderTodos();}
+
+// ═══ HISTORY ═══
+let histPeriod='miss';
+function setPeriod(p,el){
+  histPeriod=p;
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderHistory();
+}
+function renderHistory(){
+  const today=todayStr();const now=new Date();
+  let pool=[...todos];
+  if(histPeriod==='miss')pool=pool.filter(t=>!t.done);
+  else if(histPeriod==='week'){const c=new Date(now);c.setDate(c.getDate()-7);const cs=c.toISOString().slice(0,10);pool=pool.filter(t=>t.date>=cs);}
+  else if(histPeriod==='month'){const cs=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;pool=pool.filter(t=>t.date>=cs);}
+
+  const hT=pool.length,hD=pool.filter(t=>t.done).length,hM=hT-hD,hR=hT?Math.round(hD/hT*100):0;
+  document.getElementById('hTotal').textContent=hT;
+  document.getElementById('hDone').textContent=hD;
+  document.getElementById('hMiss').textContent=hM;
+  document.getElementById('hRate').textContent=hR+'%';
+
+  const cont=document.getElementById('historyList');
+  if(!pool.length){cont.innerHTML='<div class="empty">✦ 해당하는 항목이 없습니다</div>';return;}
+
+  const groups={};
+  pool.forEach(t=>{const k=t.date||'nodate';if(!groups[k])groups[k]=[];groups[k].push(t);});
+  const sortedDates=Object.keys(groups).sort();
+
+  cont.innerHTML=sortedDates.map(date=>{
+    const items=groups[date];
+    const dC=items.filter(t=>t.done).length,mC=items.length-dC;
+    const ov=date<today&&date!=='nodate';
+    const dlabel=date==='nodate'?'날짜 없음':date===today?`오늘 · ${date}`:`${fmtDate(date)} · ${date}`;
+    return`<div class="history-group">
+      <div class="h-header ${ov?'ov-header':''}">
+        <div class="h-date-label">${ov?'⚠️ ':''}${dlabel}</div>
+        <div class="h-stats">
+          ${dC?`<span class="hbadge hb-done">✓ ${dC}</span>`:''}
+          ${mC?`<span class="hbadge hb-miss">✗ ${mC}</span>`:''}
+        </div>
+      </div>
+      <div class="h-items">
+        ${items.map(t=>{
+          const[pl,pc]=PL[t.priority];
+          return`<div class="h-item ${t.done?'hd':''}">
+            <span class="hi">${t.done?'✅':'❌'}</span>
+            <span class="todo-text">${t.text}</span>
+            <span class="badge ${pc}" style="font-size:9px">${pl}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══ POMODORO ═══
+let tInt=null,tSec=25*60,tRun=false,tBreak=false;
+function toggleTimer(){
+  if(tRun){clearInterval(tInt);tRun=false;document.getElementById('timerBtn').textContent='▶ 시작';}
+  else{
+    tRun=true;document.getElementById('timerBtn').textContent='⏸ 일시정지';
+    tInt=setInterval(()=>{
+      tSec--;
+      if(tSec<=0){
+        clearInterval(tInt);tRun=false;tBreak=!tBreak;tSec=tBreak?5*60:25*60;
+        document.getElementById('timerMode').textContent=tBreak?'휴식':'집중';
+        document.getElementById('timerBtn').textContent='▶ 시작';
+        updateTD();
+        if(typeof Notification!=='undefined'&&Notification.permission==='granted')
+          new Notification(tBreak?'🌿 휴식 시간!':'🔥 집중 시작!',{body:tBreak?'5분간 쉬세요.':'25분 집중할 시간입니다.'});
+        return;
+      }
+      updateTD();
+    },1000);
+  }
+}
+function resetTimer(){clearInterval(tInt);tRun=false;tBreak=false;tSec=25*60;
+  document.getElementById('timerMode').textContent='집중';document.getElementById('timerBtn').textContent='▶ 시작';
+  document.getElementById('timerCircle').style.borderColor='';updateTD();}
+function updateTD(){
+  const m=String(Math.floor(tSec/60)).padStart(2,'0'),s=String(tSec%60).padStart(2,'0');
+  document.getElementById('timerDisplay').textContent=`${m}:${s}`;
+  const r=tBreak?tSec/300:tSec/1500;
+  document.getElementById('timerCircle').style.borderColor=tBreak?`rgba(45,106,79,${0.3+0.5*(1-r)})`:`rgba(201,125,32,${0.3+0.5*(1-r)})`;
+}
+
+// ═══ INIT ═══
+saveTodos();
+buildFilter();
+renderTodos();
+renderAlarms();
+updateOvBanner();
+if(S.get('mr_tab','todo')==='history')renderHistory();
+</script>
+</body>
+</html>
